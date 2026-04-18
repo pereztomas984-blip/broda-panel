@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BRODA STUDIO — Panel Principal</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #0f0f0f; color: #e8e8e6; min-height: 100vh; padding: 24px; }
+  
+  .header { margin-bottom: 28px; }
+  .header h1 { font-size: 28px; font-weight: 600; color: #fff; letter-spacing: -0.5px; }
+  .header p { font-size: 14px; color: #888; margin-top: 4px; }
+  
+  .seccion-titulo { font-size: 11px; font-weight: 600; color: #555; text-transform: uppercase; letter-spacing: .1em; margin-bottom: 12px; display: flex; align-items: center; gap: 8px; }
+  .seccion-titulo::after { content: ''; flex: 1; height: 0.5px; background: #222; }
+  
+  .seccion { margin-bottom: 32px; }
+
+  /* TAREAS */
+  .tabla-tareas { width: 100%; border-collapse: collapse; }
+  .tabla-tareas th { font-size: 11px; color: #555; font-weight: 500; text-align: left; padding: 0 12px 8px; border-bottom: 0.5px solid #222; }
+  .tabla-tareas td { padding: 10px 12px; font-size: 13px; border-bottom: 0.5px solid #1a1a1a; vertical-align: middle; }
+  .tabla-tareas tr:hover td { background: #161616; }
+  .tabla-tareas tr:last-child td { border-bottom: none; }
+  
+  .tag { display: inline-block; font-size: 11px; font-weight: 500; padding: 2px 8px; border-radius: 20px; }
+  .tag-rojo { background: #3d1a1a; color: #f09595; }
+  .tag-naranja { background: #2d1f0f; color: #EF9F27; }
+  .tag-amarillo { background: #2a2514; color: #FAC775; }
+  .tag-azul { background: #0f1e2d; color: #85B7EB; }
+  .tag-verde { background: #162110; color: #97C459; }
+  .tag-gris { background: #1e1e1e; color: #888; }
+  .tag-morado { background: #1e1530; color: #AFA9EC; }
+
+  .estado-dot { width: 7px; height: 7px; border-radius: 50%; display: inline-block; margin-right: 6px; }
+  .dot-verde { background: #639922; }
+  .dot-azul { background: #378ADD; }
+  .dot-rojo { background: #E24B4A; }
+  .dot-gris { background: #555; }
+
+  .btn-ver { font-size: 12px; color: #378ADD; background: none; border: none; cursor: pointer; padding: 4px 8px; border-radius: 6px; }
+  .btn-ver:hover { background: #0f1e2d; }
+
+  .card-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 12px; }
+  
+  /* OBJETIVOS */
+  .obj-card { background: #161616; border: 0.5px solid #222; border-radius: 12px; padding: 16px; }
+  .obj-card-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px; }
+  .obj-tipo { font-size: 10px; font-weight: 600; color: #555; text-transform: uppercase; letter-spacing: .08em; margin-bottom: 4px; }
+  .obj-nombre { font-size: 14px; font-weight: 500; color: #e8e8e6; line-height: 1.4; }
+  .obj-periodo { font-size: 11px; color: #555; margin-top: 6px; }
+  .alineacion { display: flex; align-items: center; gap: 6px; margin-top: 10px; padding-top: 10px; border-top: 0.5px solid #222; font-size: 12px; }
+  .semaforo { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+  .s-verde { background: #639922; }
+  .s-amarillo { background: #BA7517; }
+  .s-rojo { background: #E24B4A; }
+  .s-gris { background: #444; }
+
+  /* CLIENTES */
+  .cliente-card { background: #161616; border: 0.5px solid #222; border-radius: 12px; padding: 16px; cursor: pointer; transition: border-color .15s; }
+  .cliente-card:hover { border-color: #333; }
+  .cliente-header { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
+  .cliente-avatar { width: 36px; height: 36px; border-radius: 8px; background: #1e1e1e; display: flex; align-items: center; justify-content: center; font-size: 18px; flex-shrink: 0; }
+  .cliente-nombre { font-size: 14px; font-weight: 500; color: #e8e8e6; }
+  .cliente-rubro { font-size: 12px; color: #555; margin-top: 2px; }
+  .cliente-stats { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .stat { background: #0f0f0f; border-radius: 8px; padding: 8px 10px; }
+  .stat-label { font-size: 10px; color: #555; margin-bottom: 2px; }
+  .stat-val { font-size: 13px; font-weight: 500; color: #e8e8e6; }
+  .cliente-footer { display: flex; justify-content: space-between; align-items: center; margin-top: 12px; padding-top: 12px; border-top: 0.5px solid #1a1a1a; }
+  .btn-abrir { font-size: 12px; color: #378ADD; background: none; border: 0.5px solid #0f1e2d; padding: 4px 10px; border-radius: 6px; cursor: pointer; }
+  .btn-abrir:hover { background: #0f1e2d; }
+
+  .ver-todo { display: flex; justify-content: flex-end; margin-top: 10px; }
+  .btn-todo { font-size: 12px; color: #555; background: none; border: 0.5px solid #222; padding: 5px 12px; border-radius: 6px; cursor: pointer; }
+  .btn-todo:hover { border-color: #333; color: #888; }
+
+  .persona-chip { display: inline-flex; align-items: center; gap: 5px; background: #1e1e1e; border-radius: 20px; padding: 3px 8px; font-size: 12px; color: #888; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>🧠 BRODA STUDIO</h1>
+  <p>Panel de operaciones — hoy es viernes 17 de abril 2026</p>
+</div>
+
+<!-- TAREAS -->
+<div class="seccion">
+  <div class="seccion-titulo">Tareas activas</div>
+  <table class="tabla-tareas">
+    <thead>
+      <tr>
+        <th>Tarea</th>
+        <th>Cliente</th>
+        <th>Etapa</th>
+        <th>Persona</th>
+        <th>Deadline</th>
+        <th>Prioridad</th>
+        <th>Estado</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>Research profundo nicho transporte</td>
+        <td><span class="tag tag-naranja">DESPA</span></td>
+        <td><span class="tag tag-amarillo">Etapa 00</span></td>
+        <td><span class="persona-chip">Tomi</span></td>
+        <td style="color:#555">A definir</td>
+        <td><span class="tag tag-gris">— Sin fecha</span></td>
+        <td><span class="estado-dot dot-gris"></span><span style="color:#888;font-size:13px">Sin iniciar</span></td>
+        <td><button class="btn-ver" onclick="alert('→ Ir a tarea en Notion')">→</button></td>
+      </tr>
+      <tr>
+        <td>Research externo de DESPA</td>
+        <td><span class="tag tag-naranja">DESPA</span></td>
+        <td><span class="tag tag-amarillo">Etapa 00</span></td>
+        <td><span class="persona-chip">Tomi</span></td>
+        <td style="color:#555">A definir</td>
+        <td><span class="tag tag-gris">— Sin fecha</span></td>
+        <td><span class="estado-dot dot-gris"></span><span style="color:#888;font-size:13px">Sin iniciar</span></td>
+        <td><button class="btn-ver" onclick="alert('→ Ir a tarea en Notion')">→</button></td>
+      </tr>
+      <tr>
+        <td>Entrevistas con founder DESPA</td>
+        <td><span class="tag tag-naranja">DESPA</span></td>
+        <td><span class="tag tag-amarillo">Etapa 00</span></td>
+        <td><span class="persona-chip">Tomi</span></td>
+        <td style="color:#555">A definir</td>
+        <td><span class="tag tag-gris">— Sin fecha</span></td>
+        <td><span class="estado-dot dot-gris"></span><span style="color:#888;font-size:13px">Sin iniciar</span></td>
+        <td><button class="btn-ver" onclick="alert('→ Ir a tarea en Notion')">→</button></td>
+      </tr>
+    </tbody>
+  </table>
+  <div class="ver-todo">
+    <button class="btn-todo" onclick="window.open('https://www.notion.so/222274a334064af3b5ea4c533ee7b0f2','_blank')">Ver todas las tareas →</button>
+  </div>
+</div>
+
+<!-- OBJETIVOS -->
+<div class="seccion">
+  <div class="seccion-titulo">Objetivos</div>
+  <div class="card-row">
+
+    <div class="obj-card">
+      <div class="obj-tipo">Interno — Broda</div>
+      <div class="obj-nombre">Lanzar sistema de gestión operativa completo</div>
+      <div class="obj-periodo">Trimestral · Q2 2026</div>
+      <div class="alineacion">
+        <div class="semaforo s-amarillo"></div>
+        <span style="color:#888">Con desvíos</span>
+      </div>
+    </div>
+
+    <div class="obj-card">
+      <div class="obj-tipo">Interno — Broda</div>
+      <div class="obj-nombre">Incorporar 3 clientes nuevos al sistema</div>
+      <div class="obj-periodo">Mensual · Abril 2026</div>
+      <div class="alineacion">
+        <div class="semaforo s-verde"></div>
+        <span style="color:#888">En camino</span>
+      </div>
+    </div>
+
+    <div class="obj-card">
+      <div class="obj-tipo">Cliente — DESPA</div>
+      <div class="obj-nombre">Posicionamiento digital en nicho transporte</div>
+      <div class="obj-periodo">Trimestral · Q2 2026</div>
+      <div class="alineacion">
+        <div class="semaforo s-verde"></div>
+        <span style="color:#888">En camino</span>
+      </div>
+    </div>
+
+    <div class="obj-card">
+      <div class="obj-tipo">Cliente — DESPA</div>
+      <div class="obj-nombre">Completar Arqueología Digital con síntesis</div>
+      <div class="obj-periodo">Mensual · Abril 2026</div>
+      <div class="alineacion">
+        <div class="semaforo s-gris"></div>
+        <span style="color:#888">Sin revisar</span>
+      </div>
+    </div>
+
+  </div>
+  <div class="ver-todo">
+    <button class="btn-todo" onclick="alert('→ Ir a base de Objetivos en Notion')">Ver todos los objetivos →</button>
+  </div>
+</div>
+
+<!-- CLIENTES -->
+<div class="seccion">
+  <div class="seccion-titulo">Clientes activos</div>
+  <div class="card-row">
+
+    <div class="cliente-card" onclick="window.open('https://www.notion.so/32a1a3bfeb9c81a48316da884f67d08f','_blank')">
+      <div class="cliente-header">
+        <div class="cliente-avatar">🚛</div>
+        <div>
+          <div class="cliente-nombre">DESPA</div>
+          <div class="cliente-rubro">Transportes & Logística</div>
+        </div>
+      </div>
+      <div class="cliente-stats">
+        <div class="stat">
+          <div class="stat-label">Etapa</div>
+          <div class="stat-val"><span class="tag tag-amarillo" style="font-size:11px">Etapa 00</span></div>
+        </div>
+        <div class="stat">
+          <div class="stat-label">Salud</div>
+          <div class="stat-val"><span class="estado-dot dot-verde"></span>En tiempo</div>
+        </div>
+      </div>
+      <div class="cliente-footer">
+        <span style="font-size:12px;color:#555">Responsable: Tomi</span>
+        <button class="btn-abrir">Ver panel →</button>
+      </div>
+    </div>
+
+    <div class="cliente-card">
+      <div class="cliente-header">
+        <div class="cliente-avatar">🏛️</div>
+        <div>
+          <div class="cliente-nombre">MARQ</div>
+          <div class="cliente-rubro">Arquitectura & Diseño</div>
+        </div>
+      </div>
+      <div class="cliente-stats">
+        <div class="stat">
+          <div class="stat-label">Etapa</div>
+          <div class="stat-val"><span class="tag tag-gris" style="font-size:11px">Sin iniciar</span></div>
+        </div>
+        <div class="stat">
+          <div class="stat-label">Salud</div>
+          <div class="stat-val"><span class="estado-dot dot-gris"></span>Pendiente</div>
+        </div>
+      </div>
+      <div class="cliente-footer">
+        <span style="font-size:12px;color:#555">Sin asignar</span>
+        <button class="btn-abrir">Ver panel →</button>
+      </div>
+    </div>
+
+    <div class="cliente-card">
+      <div class="cliente-header">
+        <div class="cliente-avatar">🏢</div>
+        <div>
+          <div class="cliente-nombre">ILONA</div>
+          <div class="cliente-rubro">Desarrollo Inmobiliario</div>
+        </div>
+      </div>
+      <div class="cliente-stats">
+        <div class="stat">
+          <div class="stat-label">Etapa</div>
+          <div class="stat-val"><span class="tag tag-gris" style="font-size:11px">Sin iniciar</span></div>
+        </div>
+        <div class="stat">
+          <div class="stat-label">Salud</div>
+          <div class="stat-val"><span class="estado-dot dot-gris"></span>Pendiente</div>
+        </div>
+      </div>
+      <div class="cliente-footer">
+        <span style="font-size:12px;color:#555">Sin asignar</span>
+        <button class="btn-abrir">Ver panel →</button>
+      </div>
+    </div>
+
+    <div class="cliente-card">
+      <div class="cliente-header">
+        <div class="cliente-avatar">🧠</div>
+        <div>
+          <div class="cliente-nombre">Maria Jose Chiesa</div>
+          <div class="cliente-rubro">Psicología</div>
+        </div>
+      </div>
+      <div class="cliente-stats">
+        <div class="stat">
+          <div class="stat-label">Etapa</div>
+          <div class="stat-val"><span class="tag tag-gris" style="font-size:11px">Sin iniciar</span></div>
+        </div>
+        <div class="stat">
+          <div class="stat-label">Salud</div>
+          <div class="stat-val"><span class="estado-dot dot-gris"></span>Pendiente</div>
+        </div>
+      </div>
+      <div class="cliente-footer">
+        <span style="font-size:12px;color:#555">Sin asignar</span>
+        <button class="btn-abrir">Ver panel →</button>
+      </div>
+    </div>
+
+    <div class="cliente-card">
+      <div class="cliente-header">
+        <div class="cliente-avatar">🎙️</div>
+        <div>
+          <div class="cliente-nombre">Crudo & Queso</div>
+          <div class="cliente-rubro">Podcast</div>
+        </div>
+      </div>
+      <div class="cliente-stats">
+        <div class="stat">
+          <div class="stat-label">Etapa</div>
+          <div class="stat-val"><span class="tag tag-gris" style="font-size:11px">Sin iniciar</span></div>
+        </div>
+        <div class="stat">
+          <div class="stat-label">Salud</div>
+          <div class="stat-val"><span class="estado-dot dot-gris"></span>Pendiente</div>
+        </div>
+      </div>
+      <div class="cliente-footer">
+        <span style="font-size:12px;color:#555">Sin asignar</span>
+        <button class="btn-abrir">Ver panel →</button>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+</body>
+</html>
