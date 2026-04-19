@@ -1,25 +1,308 @@
-export default async function handler(req, res) {
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
-  if (req.method === 'OPTIONS') return res.status(200).end();
-  
-  const { db } = req.query;
-  const TOKEN = 'ntn_f7042231196knXVrFKieB6kblvyxlov1J2fmxt9NkHM5sN';
-  
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BRODA STUDIO — Panel</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #0f0f0f; color: #e8e8e6; min-height: 100vh; display: flex; }
+  .sidebar { width: 220px; min-height: 100vh; background: #111; border-right: 0.5px solid #1e1e1e; padding: 20px 0; flex-shrink: 0; position: sticky; top: 0; height: 100vh; display: flex; flex-direction: column; }
+  .sidebar-logo { padding: 0 16px 20px; border-bottom: 0.5px solid #1e1e1e; margin-bottom: 12px; }
+  .sidebar-logo h2 { font-size: 15px; font-weight: 700; color: #fff; letter-spacing: -0.3px; }
+  .sidebar-logo p { font-size: 11px; color: #444; margin-top: 2px; }
+  .nav-item { display: flex; align-items: center; gap: 10px; padding: 8px 16px; font-size: 13px; color: #666; cursor: pointer; transition: all .15s; border-left: 2px solid transparent; }
+  .nav-item:hover { color: #aaa; background: #161616; }
+  .nav-item.active { color: #e8e8e6; background: #161616; border-left-color: #378ADD; }
+  .nav-icon { font-size: 14px; width: 16px; text-align: center; }
+  .nav-section { font-size: 10px; color: #333; text-transform: uppercase; letter-spacing: .1em; padding: 12px 16px 4px; }
+  .sidebar-bottom { margin-top: auto; padding: 16px; border-top: 0.5px solid #1e1e1e; }
+  .sync-btn { width: 100%; background: #161616; border: 0.5px solid #222; color: #555; font-size: 12px; padding: 7px; border-radius: 6px; cursor: pointer; transition: all .15s; }
+  .sync-btn:hover { border-color: #333; color: #888; }
+  .sync-btn.loading { color: #378ADD; border-color: #0f1e2d; }
+  .main { flex: 1; padding: 28px 32px; overflow-y: auto; }
+  .top-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 28px; }
+  .top-bar h1 { font-size: 22px; font-weight: 600; color: #fff; }
+  .fecha-hoy { font-size: 12px; color: #555; background: #161616; border: 0.5px solid #222; padding: 4px 10px; border-radius: 6px; }
+  .seccion { margin-bottom: 32px; }
+  .seccion-titulo { font-size: 11px; font-weight: 600; color: #444; text-transform: uppercase; letter-spacing: .1em; margin-bottom: 12px; display: flex; align-items: center; }
+  .seccion-titulo::after { content: ''; flex: 1; height: 0.5px; background: #1e1e1e; margin-left: 12px; }
+  .seccion-count { font-size: 11px; color: #333; background: #161616; padding: 2px 7px; border-radius: 10px; margin-left: 8px; }
+  .loading-state { text-align: center; padding: 40px; color: #333; font-size: 13px; }
+  .spinner { display: inline-block; width: 16px; height: 16px; border: 1.5px solid #222; border-top-color: #378ADD; border-radius: 50%; animation: spin .7s linear infinite; margin-right: 8px; vertical-align: middle; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .tabla-wrap { background: #141414; border: 0.5px solid #1e1e1e; border-radius: 10px; overflow: hidden; }
+  .tabla-tareas { width: 100%; border-collapse: collapse; }
+  .tabla-tareas th { font-size: 10px; color: #444; font-weight: 500; text-align: left; padding: 10px 14px; border-bottom: 0.5px solid #1e1e1e; text-transform: uppercase; letter-spacing: .06em; }
+  .tabla-tareas td { padding: 10px 14px; font-size: 13px; border-bottom: 0.5px solid #191919; vertical-align: middle; }
+  .tabla-tareas tr:last-child td { border-bottom: none; }
+  .tabla-tareas tr:hover td { background: #161616; }
+  .tarea-nombre { font-size: 13px; color: #d8d8d6; max-width: 260px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .tag { display: inline-block; font-size: 11px; font-weight: 500; padding: 2px 8px; border-radius: 20px; white-space: nowrap; }
+  .tag-rojo { background: #3d1a1a; color: #f09595; }
+  .tag-naranja { background: #2d1a0a; color: #EF9F27; }
+  .tag-amarillo { background: #2a2010; color: #FAC775; }
+  .tag-azul { background: #0a1520; color: #85B7EB; }
+  .tag-verde { background: #121a0a; color: #97C459; }
+  .tag-gris { background: #1a1a1a; color: #666; }
+  .tag-morado { background: #1a1530; color: #AFA9EC; }
+  .dot { width: 7px; height: 7px; border-radius: 50%; display: inline-block; margin-right: 5px; flex-shrink: 0; }
+  .dot-verde { background: #639922; } .dot-azul { background: #378ADD; } .dot-rojo { background: #E24B4A; } .dot-amarillo { background: #BA7517; } .dot-gris { background: #444; }
+  .btn-link { font-size: 11px; color: #378ADD; background: none; border: none; cursor: pointer; padding: 3px 6px; border-radius: 4px; opacity: 0; transition: opacity .15s; }
+  tr:hover .btn-link { opacity: 1; }
+  .ver-todo-wrap { display: flex; justify-content: flex-end; padding: 10px 14px; border-top: 0.5px solid #191919; }
+  .btn-ver-todo { font-size: 12px; color: #444; background: none; border: none; cursor: pointer; }
+  .btn-ver-todo:hover { color: #666; }
+  .card-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 10px; }
+  .obj-card { background: #141414; border: 0.5px solid #1e1e1e; border-radius: 10px; padding: 14px; }
+  .obj-tipo { font-size: 10px; font-weight: 600; color: #444; text-transform: uppercase; letter-spacing: .08em; margin-bottom: 5px; }
+  .obj-nombre { font-size: 13px; font-weight: 500; color: #d8d8d6; line-height: 1.4; margin-bottom: 8px; }
+  .obj-periodo { font-size: 11px; color: #444; }
+  .obj-alineacion { display: flex; align-items: center; gap: 6px; margin-top: 10px; padding-top: 10px; border-top: 0.5px solid #1a1a1a; font-size: 12px; color: #555; }
+  .cliente-card { background: #141414; border: 0.5px solid #1e1e1e; border-radius: 10px; padding: 14px; cursor: pointer; transition: border-color .15s; }
+  .cliente-card:hover { border-color: #2a2a2a; }
+  .cliente-header { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
+  .cliente-avatar { width: 34px; height: 34px; border-radius: 8px; background: #1e1e1e; display: flex; align-items: center; justify-content: center; font-size: 16px; flex-shrink: 0; }
+  .cliente-nombre { font-size: 13px; font-weight: 500; color: #e8e8e6; }
+  .cliente-rubro { font-size: 11px; color: #444; margin-top: 2px; }
+  .cliente-stats { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+  .stat { background: #0f0f0f; border-radius: 6px; padding: 7px 10px; }
+  .stat-label { font-size: 10px; color: #444; margin-bottom: 2px; }
+  .stat-val { font-size: 12px; font-weight: 500; color: #d8d8d6; display: flex; align-items: center; }
+  .cliente-footer { display: flex; justify-content: space-between; align-items: center; margin-top: 10px; padding-top: 10px; border-top: 0.5px solid #1a1a1a; }
+  .btn-panel { font-size: 11px; color: #378ADD; background: none; border: 0.5px solid #0f1e2d; padding: 3px 9px; border-radius: 5px; cursor: pointer; }
+  .btn-panel:hover { background: #0f1e2d; }
+</style>
+</head>
+<body>
+<div class="sidebar">
+  <div class="sidebar-logo">
+    <h2>BRODA STUDIO</h2>
+    <p>Panel de operaciones</p>
+  </div>
+  <div class="nav-section">Principal</div>
+  <div class="nav-item active"><span class="nav-icon">◈</span> Dashboard</div>
+  <div class="nav-item" onclick="window.open('https://www.notion.so/222274a334064af3b5ea4c533ee7b0f2','_blank')"><span class="nav-icon">✓</span> Tareas</div>
+  <div class="nav-item" onclick="window.open('https://www.notion.so/96e1a3bfeb9c83e9a8be8155dcb6ea8d','_blank')"><span class="nav-icon">◎</span> Objetivos</div>
+  <div class="nav-section">Clientes</div>
+  <div class="nav-item" onclick="window.open('https://www.notion.so/32a1a3bfeb9c81a48316da884f67d08f','_blank')"><span class="nav-icon">🚛</span> DESPA</div>
+  <div class="nav-item" onclick="window.open('https://www.notion.so/Gestion-de-Clientes-32a1a3bfeb9c81f59034d6af27caa0c6','_blank')"><span class="nav-icon">👥</span> Todos los clientes</div>
+  <div class="nav-section">Gestión</div>
+  <div class="nav-item" onclick="window.open('https://www.notion.so/7761a3bfeb9c83f6a8f9817f5bf909cd','_blank')"><span class="nav-icon">↗</span> Abrir Notion</div>
+  <div class="sidebar-bottom">
+    <button class="sync-btn" id="syncBtn" onclick="cargarDatos()">↻ Sincronizar datos</button>
+  </div>
+</div>
+ 
+<div class="main">
+  <div class="top-bar">
+    <h1>Dashboard</h1>
+    <span class="fecha-hoy" id="fechaHoy"></span>
+  </div>
+ 
+  <div class="seccion">
+    <div class="seccion-titulo">Tareas activas <span class="seccion-count" id="tareasCount">—</span></div>
+    <div class="tabla-wrap">
+      <div class="loading-state" id="tareasLoading"><span class="spinner"></span>Cargando tareas...</div>
+      <table class="tabla-tareas" id="tareasTabla" style="display:none">
+        <thead><tr><th>Tarea</th><th>Cliente</th><th>Etapa</th><th>Persona</th><th>Estado</th><th>Prioridad</th><th>Deadline</th><th></th></tr></thead>
+        <tbody id="tareasBody"></tbody>
+      </table>
+      <div class="ver-todo-wrap">
+        <button class="btn-ver-todo" onclick="window.open('https://www.notion.so/222274a334064af3b5ea4c533ee7b0f2','_blank')">Ver todas las tareas →</button>
+      </div>
+    </div>
+  </div>
+ 
+  <div class="seccion">
+    <div class="seccion-titulo">Objetivos <span class="seccion-count" id="objetivosCount">—</span></div>
+    <div class="loading-state" id="objetivosLoading"><span class="spinner"></span>Cargando objetivos...</div>
+    <div class="card-grid" id="objetivosGrid" style="display:none"></div>
+  </div>
+ 
+  <div class="seccion">
+    <div class="seccion-titulo">Clientes activos <span class="seccion-count" id="clientesCount">—</span></div>
+    <div class="loading-state" id="clientesLoading"><span class="spinner"></span>Cargando clientes...</div>
+    <div class="card-grid" id="clientesGrid" style="display:none"></div>
+  </div>
+</div>
+ 
+<script>
+const TOKEN = 'ntn_f7042231196knXVrFKieB6kblvyxlov1J2fmxt9NkHM5sN';
+const TAREAS_DB = '222274a334064af3b5ea4c533ee7b0f2';
+const CLIENTES_DB = '8e68bf6f20d343de9ca82f0bc1680f4a';
+const OBJETIVOS_DB = '96e1a3bfeb9c83e9a8be8155dcb6ea8d';
+ 
+const dias = ['domingo','lunes','martes','miércoles','jueves','viernes','sábado'];
+const meses = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
+const hoy = new Date();
+document.getElementById('fechaHoy').textContent = `${dias[hoy.getDay()]} ${hoy.getDate()} de ${meses[hoy.getMonth()]} ${hoy.getFullYear()}`;
+ 
+async function notionFetch(dbId, body) {
+  const res = await fetch(`/api/notion?db=${dbId}`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body || {})
+  });
+  if (!res.ok) throw new Error(`Error ${res.status}`);
+  return res.json();
+}
+ 
+function getProp(page, key) {
+  const p = page.properties[key];
+  if (!p) return null;
+  if (p.type === 'title') return p.title?.map(t => t.plain_text).join('') || '';
+  if (p.type === 'select') return p.select?.name || null;
+  if (p.type === 'status') return p.status?.name || null;
+  if (p.type === 'date') return p.date?.start || null;
+  if (p.type === 'people') return p.people?.map(u => u.name).join(', ') || null;
+  if (p.type === 'relation') return p.relation || [];
+  if (p.type === 'rich_text') return p.rich_text?.map(t => t.plain_text).join('') || '';
+  return null;
+}
+ 
+function etapaTag(e) {
+  if (!e) return '<span class="tag tag-gris">—</span>';
+  const m = {'Etapa 00':'tag-amarillo','Etapa 01':'tag-azul','Etapa 02':'tag-verde','Etapa 03':'tag-morado'};
+  const c = Object.keys(m).find(k => e.includes(k));
+  return `<span class="tag ${c ? m[c] : 'tag-gris'}">${e.replace(' — Arqueología','').replace(' — Identidad','').replace(' — Growth','').replace(' — AI & Auto','')}</span>`;
+}
+ 
+function estadoDot(e) {
+  if (!e) return '<span class="dot dot-gris"></span>';
+  if (e === 'Completado' || e === 'Listo') return '<span class="dot dot-verde"></span>';
+  if (e.includes('progreso') || e.includes('curso')) return '<span class="dot dot-azul"></span>';
+  if (e === 'Bloqueado') return '<span class="dot dot-rojo"></span>';
+  if (e.includes('revisión')) return '<span class="dot dot-amarillo"></span>';
+  return '<span class="dot dot-gris"></span>';
+}
+ 
+function prioridadTag(p) {
+  if (!p) return '<span class="tag tag-gris">—</span>';
+  if (p.includes('Alta') || p === 'Urgente') return `<span class="tag tag-rojo">${p}</span>`;
+  if (p.includes('Media')) return `<span class="tag tag-naranja">${p}</span>`;
+  return `<span class="tag tag-gris">${p}</span>`;
+}
+ 
+function semaforo(a) {
+  if (!a) return '<span class="dot dot-gris"></span>';
+  if (a.includes('camino')) return '<span class="dot dot-verde"></span>';
+  if (a.includes('desvío') || a.includes('desvíos')) return '<span class="dot dot-amarillo"></span>';
+  if (a.includes('Desalineado')) return '<span class="dot dot-rojo"></span>';
+  return '<span class="dot dot-gris"></span>';
+}
+ 
+async function cargarTareas() {
+  document.getElementById('tareasLoading').style.display = 'block';
+  document.getElementById('tareasTabla').style.display = 'none';
   try {
-    const response = await fetch(`https://api.notion.com/v1/databases/${db}/query`, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${TOKEN}`,
-        'Notion-Version': '2022-06-28',
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify(req.body || {})
+    const data = await notionFetch(TAREAS_DB, {
+      filter: { property: 'Estado', status: { does_not_equal: 'Completado' } },
+      sorts: [{ property: 'Deadline', direction: 'ascending' }],
+      page_size: 15
     });
-    const data = await response.json();
-    res.status(200).json(data);
+    const rows = data.results || [];
+    document.getElementById('tareasCount').textContent = rows.length;
+    document.getElementById('tareasBody').innerHTML = rows.map(r => {
+      const nombre = getProp(r, 'Tarea') || '—';
+      const etapa = getProp(r, 'Etapa');
+      const estado = getProp(r, 'Estado');
+      const prioridad = getProp(r, 'Prioridad');
+      const deadline = getProp(r, 'Deadline');
+      const persona = getProp(r, 'Persona');
+      const cliente = getProp(r, 'Cliente');
+      const clienteNombre = Array.isArray(cliente) && cliente.length > 0 ? 'DESPA' : '—';
+      return `<tr>
+        <td><div class="tarea-nombre">${nombre}</div></td>
+        <td><span class="tag tag-naranja" style="font-size:11px">${clienteNombre}</span></td>
+        <td>${etapaTag(etapa)}</td>
+        <td><span style="font-size:12px;color:#555">${persona || '—'}</span></td>
+        <td>${estadoDot(estado)}<span style="font-size:12px;color:#666">${estado || '—'}</span></td>
+        <td>${prioridadTag(prioridad)}</td>
+        <td style="font-size:12px;color:#555">${deadline || '—'}</td>
+        <td><button class="btn-link" onclick="window.open('${r.url}','_blank')">→</button></td>
+      </tr>`;
+    }).join('');
+    document.getElementById('tareasLoading').style.display = 'none';
+    document.getElementById('tareasTabla').style.display = 'table';
   } catch(e) {
-    res.status(500).json({ error: e.message });
+    document.getElementById('tareasLoading').innerHTML = `<span style="color:#f09595">⚠ ${e.message}</span>`;
   }
 }
+ 
+async function cargarObjetivos() {
+  document.getElementById('objetivosLoading').style.display = 'block';
+  document.getElementById('objetivosGrid').style.display = 'none';
+  try {
+    const data = await notionFetch(OBJETIVOS_DB, { page_size: 6 });
+    const rows = data.results || [];
+    document.getElementById('objetivosCount').textContent = rows.length;
+    document.getElementById('objetivosGrid').innerHTML = rows.map(r => {
+      const nombre = getProp(r, 'Objetivos') || getProp(r, 'Name') || '—';
+      const tipo = getProp(r, 'Tipo') || 'Interno';
+      const periodo = getProp(r, 'Periodo') || '—';
+      const año = getProp(r, 'Año') || '';
+      const alineacion = getProp(r, 'Alineación Semanal') || '— Sin revisar';
+      return `<div class="obj-card">
+        <div class="obj-tipo">${tipo}</div>
+        <div class="obj-nombre">${nombre}</div>
+        <div class="obj-periodo">${periodo} · ${año}</div>
+        <div class="obj-alineacion">${semaforo(alineacion)}<span>${alineacion}</span></div>
+      </div>`;
+    }).join('');
+    document.getElementById('objetivosLoading').style.display = 'none';
+    document.getElementById('objetivosGrid').style.display = 'grid';
+  } catch(e) {
+    document.getElementById('objetivosLoading').innerHTML = `<span style="color:#f09595">⚠ ${e.message}</span>`;
+  }
+}
+ 
+async function cargarClientes() {
+  document.getElementById('clientesLoading').style.display = 'block';
+  document.getElementById('clientesGrid').style.display = 'none';
+  try {
+    const data = await notionFetch(CLIENTES_DB, { page_size: 10 });
+    const rows = data.results || [];
+    document.getElementById('clientesCount').textContent = rows.length;
+    const emojis = {'DESPA':'🚛','MARQ':'🏛️','ILONA':'🏢','Maria':'🧠','Crudo':'🎙️'};
+    document.getElementById('clientesGrid').innerHTML = rows.map(r => {
+      const nombre = getProp(r, 'Nombre del Cliente') || getProp(r, 'Cliente') || '—';
+      const etapa = getProp(r, 'Etapa Actual') || '—';
+      const salud = getProp(r, 'Salud del Proyecto') || '—';
+      const emoji = Object.keys(emojis).find(k => nombre.includes(k));
+      const saludDot = salud === 'En tiempo' ? 'dot-verde' : salud === 'Atención' ? 'dot-amarillo' : salud === 'En riesgo' ? 'dot-rojo' : 'dot-gris';
+      return `<div class="cliente-card" onclick="window.open('${r.url}','_blank')">
+        <div class="cliente-header">
+          <div class="cliente-avatar">${emoji ? emojis[emoji] : '🏷️'}</div>
+          <div><div class="cliente-nombre">${nombre}</div></div>
+        </div>
+        <div class="cliente-stats">
+          <div class="stat"><div class="stat-label">Etapa</div><div class="stat-val">${etapaTag(etapa)}</div></div>
+          <div class="stat"><div class="stat-label">Salud</div><div class="stat-val"><span class="dot ${saludDot}"></span>${salud}</div></div>
+        </div>
+        <div class="cliente-footer">
+          <span style="font-size:11px;color:#444">Ver panel</span>
+          <button class="btn-panel" onclick="event.stopPropagation();window.open('${r.url}','_blank')">→</button>
+        </div>
+      </div>`;
+    }).join('');
+    document.getElementById('clientesLoading').style.display = 'none';
+    document.getElementById('clientesGrid').style.display = 'grid';
+  } catch(e) {
+    document.getElementById('clientesLoading').innerHTML = `<span style="color:#f09595">⚠ ${e.message}</span>`;
+  }
+}
+ 
+async function cargarDatos() {
+  const btn = document.getElementById('syncBtn');
+  btn.classList.add('loading');
+  btn.textContent = '↻ Sincronizando...';
+  await Promise.all([cargarTareas(), cargarObjetivos(), cargarClientes()]);
+  btn.classList.remove('loading');
+  btn.textContent = '↻ Sincronizar datos';
+}
+ 
+cargarDatos();
+</script>
+</body>
+</html>
